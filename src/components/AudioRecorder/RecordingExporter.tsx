@@ -44,7 +44,7 @@ export const RecordingExporter = () => {
 
 		const exportPromise = new Promise<Blob>(async (resolve, reject) => {
 			worker.onmessage = (event) => {
-				if (event.data.type === "success") {
+				if (event.data.type === "export-mp3-success") {
 					resolve(event.data.mp3Blob);
 					worker.terminate();
 				}
@@ -85,7 +85,7 @@ export const RecordingExporter = () => {
 			.then((mp3Blob) => {
 				const url = URL.createObjectURL(mp3Blob);
 				setDownloadMp3RecordingUrl(url);
-				resetState();
+				// resetState();
 			})
 			.catch(console.error);
 	};
@@ -128,21 +128,18 @@ export const RecordingExporter = () => {
 				</>
 			)}
 
-			{encodingProgress > 0 ||
-				(downloadMp3RecordingUrl && (
-					<div className="flex gap-4 flex-nowrap items-center">
-						{encodingProgress > 0 && (
-							<Progress value={encodingProgress * 100} />
-						)}
-						{downloadMp3RecordingUrl && (
-							<Button asChild size="xs" variant="outline">
-								<a href={downloadMp3RecordingUrl} download="recording.mp3">
-									<Download />
-								</a>
-							</Button>
-						)}
-					</div>
-				))}
+			{(encodingProgress > 0 || downloadMp3RecordingUrl) && (
+				<div className="flex gap-4 flex-nowrap items-center">
+					{encodingProgress > 0 && <Progress value={encodingProgress * 100} />}
+					{downloadMp3RecordingUrl && (
+						<Button asChild size="xs" variant="outline">
+							<a href={downloadMp3RecordingUrl} download="recording.mp3">
+								<Download />
+							</a>
+						</Button>
+					)}
+				</div>
+			)}
 		</>
 	);
 };

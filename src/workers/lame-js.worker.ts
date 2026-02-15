@@ -14,6 +14,7 @@ interface LameJsWorkerMessage {
  */
 self.onmessage = (event: MessageEvent<LameJsWorkerMessage>) => {
     console.log('lame-js.worker.ts: onmessage', event);
+
     if (event.data.type !== 'export-mp3') return;
 
     const float32 = new Float32Array(event.data.samples);
@@ -42,5 +43,5 @@ self.onmessage = (event: MessageEvent<LameJsWorkerMessage>) => {
 
     const mp3Blob = new Blob(mp3Data.map(d => new Int8Array(d)), { type: 'audio/mp3' });
 
-    self.postMessage({ type: 'success', mp3Blob });
+    self.postMessage({ type: 'export-mp3-success', mp3Blob });
 };
