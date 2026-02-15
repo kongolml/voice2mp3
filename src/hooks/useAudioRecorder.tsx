@@ -23,7 +23,6 @@ const RAW_AUDIO_PROCESSOR_URL = new URL(
 	import.meta.url,
 );
 
-
 export const useAudioRecorder = () => {
 	const audioRecorderStore = useAudioRecorderStore();
 	const audioRecorderState = audioRecorderStore.recorderState;
@@ -45,7 +44,6 @@ export const useAudioRecorder = () => {
 		audioCtxRef.current?.close();
 		audioCtxRef.current = null;
 		analyserRef.current = null;
-		// mediaRecorderRef.current = null;
 	};
 
 	/**
@@ -122,12 +120,13 @@ export const useAudioRecorder = () => {
 		} catch (error) {
 			console.error(
 				"Error starting recording, probably you have denied access to microphone",
-				error
+				error,
 			);
 			cleanup();
 			return;
 		}
 	};
+
 	// const stopRecording = () => {
 	// 	if (
 	// 		audioRecorderState !== RecorderStatesEnum.RECORDING &&
@@ -136,7 +135,6 @@ export const useAudioRecorder = () => {
 	// 		return;
 	// 	}
 
-	// 	mediaRecorderRef.current?.stop();
 	// 	audioRecorderStore.stopRecording();
 	// };
 
@@ -173,29 +171,30 @@ export const useAudioRecorder = () => {
 			} satisfies Mp3WorkerInputMessage);
 		});
 
-		// Finalize: read all chunks from IndexedDB → single MP3 Blob
+		// finalize by reading all chunks from indexeddb and concating into single mp3 blob
 		const blob = await finalizeSession(sessionId);
 		audioRecorderStore.setAudioBlob(blob);
 
 		cleanup();
-		// mediaRecorderRef.current?.stop();
 		audioRecorderStore.stopRecording();
 	}, [cleanup, audioRecorderStore]);
-	const pauseRecording = () => {
+
+	const pauseRecording = useCallback(async () => {
 		if (audioRecorderState !== RecorderStatesEnum.RECORDING) return;
-		// mediaRecorderRef.current?.pause();
+		await audioCtxRef.current?.suspend();
 		audioRecorderStore.pauseRecording();
-	};
-	const resumeRecording = () => {
+	}, [audioRecorderState, audioRecorderStore]);
+
+	const resumeRecording = useCallback(async () => {
 		if (audioRecorderState !== RecorderStatesEnum.PAUSED) return;
-		// mediaRecorderRef.current?.resume();
+		await audioCtxRef.current?.resume();
 		audioRecorderStore.resumeRecording();
-	};
+	}, [audioRecorderState, audioRecorderStore]);
 
 	return {
 		startRecording,
 		stopRecording,
 		pauseRecording,
-		resumeRecording
+		resumeRecording,
 	};
 };

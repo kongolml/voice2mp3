@@ -16,9 +16,6 @@ import {
 import { useAudioRecorderTimer } from "@/hooks/useAudioRecorderTimer";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 
-// store
-import { useAudioRecorderStore } from "@/store/useAudioRecorder.store";
-
 // TODO: make this a custom component
 export const AudioRecorder = () => {
 	const onMaxRecordingDurationReached = () => {
@@ -27,12 +24,7 @@ export const AudioRecorder = () => {
 
 	const { totalTime, startTimer, pauseTimer, resumeTimer, stopTimer } =
 		useAudioRecorderTimer({ onMaxRecordingDurationReached });
-	const {
-		startRecording: startRecordingStore,
-		stopRecording: stopRecordingStore,
-		pauseRecording: pauseRecordingStore,
-		resumeRecording: resumeRecordingStore,
-	} = useAudioRecorderStore();
+
 	const {
 		startRecording: startRecorder,
 		stopRecording: stopRecorder,
@@ -43,25 +35,21 @@ export const AudioRecorder = () => {
 	const startRecording = async () => {
 		await startRecorder();
 		startTimer();
-		startRecordingStore();
 	};
 
 	const stopRecording = () => {
 		stopRecorder();
 		stopTimer();
-		stopRecordingStore();
 	};
 
 	const pauseRecording = () => {
 		pauseTimer();
 		pauseRecorder();
-		pauseRecordingStore();
 	};
 
 	const resumeRecording = () => {
 		resumeTimer();
 		resumeRecorder();
-		resumeRecordingStore();
 	};
 
 	return (
