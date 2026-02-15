@@ -22,7 +22,7 @@ type AudioRecorderStore = {
 export const useAudioRecorderStore = create<AudioRecorderStore>((set) => ({
     recorderState: RecorderStatesEnum.IDLE,
     startRecording: () => set({ recorderState: RecorderStatesEnum.RECORDING }),
-    stopRecording: () => set({ recorderState: RecorderStatesEnum.STOPPED }),
+    stopRecording: () => set({ recorderState: RecorderStatesEnum.IDLE }),
     pauseRecording: () => set({ recorderState: RecorderStatesEnum.PAUSED }),
     resumeRecording: () => set({ recorderState: RecorderStatesEnum.RECORDING }),
     audioBlob: null,

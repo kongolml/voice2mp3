@@ -1,6 +1,5 @@
 export const RecorderStatesEnum = {
     IDLE: 'idle',
     RECORDING: 'recording',
-    PAUSED: 'paused',
-    STOPPED: 'stopped',
+    PAUSED: 'paused'
 } as const;

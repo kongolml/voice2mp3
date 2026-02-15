@@ -75,8 +75,7 @@ export const Controls = ({
 			<Button
 				onClick={playPauseRecording}
 				disabled={
-					recorderState === RecorderStatesEnum.IDLE ||
-					recorderState === RecorderStatesEnum.STOPPED
+					recorderState === RecorderStatesEnum.IDLE
 				}
 				variant="outline"
 				size="sm"

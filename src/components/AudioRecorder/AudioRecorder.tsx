@@ -26,7 +26,7 @@ export const AudioRecorder = () => {
 		useAudioRecorderTimer({ onMaxRecordingDurationReached });
 
 	const {
-		startRecording: startRecorder,
+		startNewRecording: startRecorder,
 		stopRecording: stopRecorder,
 		pauseRecording: pauseRecorder,
 		resumeRecording: resumeRecorder,

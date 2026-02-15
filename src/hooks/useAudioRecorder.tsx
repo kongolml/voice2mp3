@@ -38,20 +38,24 @@ export const useAudioRecorder = () => {
 	 * Stop the stream, closes audio context and resets all refs to null.
 	 * This removes all UI elements and prevents memory leaks.
 	 */
-	const cleanup = () => {
-		streamRef.current?.getTracks().forEach((t) => t.stop());
+	const cleanup = useCallback(() => {
+		streamRef.current?.getTracks().forEach((t) => t.stop()); // stop mic capture
 		streamRef.current = null;
 		audioCtxRef.current?.close();
 		audioCtxRef.current = null;
 		analyserRef.current = null;
-	};
+		workletNodeRef.current = null;
+		mp3WorkerRef.current?.terminate();
+		mp3WorkerRef.current = null;
+		sessionIdRef.current = null;
+	}, []);
 
 	/**
 	 * Request access to microphone, then starts recording by splitting audio
 	 * into chunks (as discussed previously) of AUDIO_CHUNKS_LENGTH_MS seconds.
 	 * Then we glue chunks together to form a single audio file in the end.
 	 */
-	const startRecording = async () => {
+	const startNewRecording = async () => {
 		try {
 			if (audioRecorderState !== RecorderStatesEnum.IDLE) return;
 
@@ -110,9 +114,8 @@ export const useAudioRecorder = () => {
 				const msg = e.data;
 				if (msg.type === "encoded") {
 					appendChunk(sessionId, msg.mp3Chunk);
-					//   setEncodedChunks((c) => c + 1);
 				} else if (msg.type === "error") {
-					//   setError(msg.error);
+					console.error(msg.error);
 				}
 			};
 
@@ -127,17 +130,6 @@ export const useAudioRecorder = () => {
 		}
 	};
 
-	// const stopRecording = () => {
-	// 	if (
-	// 		audioRecorderState !== RecorderStatesEnum.RECORDING &&
-	// 		audioRecorderState !== RecorderStatesEnum.PAUSED
-	// 	) {
-	// 		return;
-	// 	}
-
-	// 	audioRecorderStore.stopRecording();
-	// };
-
 	const stopRecording = useCallback(async () => {
 		if (
 			audioRecorderState !== RecorderStatesEnum.RECORDING &&
@@ -150,7 +142,11 @@ export const useAudioRecorder = () => {
 		const mp3Worker = mp3WorkerRef.current;
 		const sessionId = sessionIdRef.current;
 
-		// Disconnect worklet to stop PCM flow
+		// Resume AudioContext if paused so the worker can flush remaining data
+		if (audioCtxRef.current?.state === "suspended") {
+			await audioCtxRef.current.resume();
+		}
+
 		workletNodeRef.current?.disconnect();
 
 		// Send finish and wait untill last chuks are procecssed
@@ -159,7 +155,6 @@ export const useAudioRecorder = () => {
 				const msg = e.data;
 				if (msg.type === "encoded") {
 					appendChunk(sessionId, msg.mp3Chunk);
-					//   setEncodedChunks((c) => c + 1);
 				} else if (msg.type === "done") {
 					resolve();
 				} else if (msg.type === "error") {
@@ -192,7 +187,7 @@ export const useAudioRecorder = () => {
 	}, [audioRecorderState, audioRecorderStore]);
 
 	return {
-		startRecording,
+		startNewRecording,
 		stopRecording,
 		pauseRecording,
 		resumeRecording,
