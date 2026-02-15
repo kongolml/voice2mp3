@@ -1,47 +1,73 @@
 import { Mp3Encoder } from "@breezystack/lamejs";
 
-interface LameJsWorkerMessage {
-    type: 'export-mp3';
-    samples: ArrayBuffer;
-    sampleRate: number;
+// types
+import type { Mp3WorkerInputMessage, Mp3WorkerOutputMessage } from "@/meta/workers.meta";
+
+
+let encoder: Mp3Encoder | null = null;
+
+/**
+ * Converts Float32 [-1.0, 1.0] to Int16 [-32768, 32767]/[0x8000, 0x7fff].
+ * This is how lamejs expects audio data
+ */
+const float32ToInt16 = (float32: Float32Array): Int16Array => {
+    const int16 = new Int16Array(float32.length);
+    for (let i = 0; i < float32.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32[i]));
+        int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return int16;
 }
 
 /**
- * Converts an audio Blob into a mono Int16Array of PCM samples.
- *  Decodes the blob at 44100 Hz using OfflineAudioContext,
- *  then converts Float32 [-1.0, 1.0] to Int16 [-32768, 32767]
- *  suitable for MP3 encoding (e.g. lamejs)
+ * Encodes raw audio data into mp3.
+ * Lamejs worker is initialized here as well and used the same instance for the entire recording session.
  */
-self.onmessage = (event: MessageEvent<LameJsWorkerMessage>) => {
-    console.log('lame-js.worker.ts: onmessage', event);
+self.onmessage = (e: MessageEvent<Mp3WorkerInputMessage>) => {
+    try {
+        const { type } = e.data;
 
-    if (event.data.type !== 'export-mp3') return;
+        if (type === 'init') {
+            const { sampleRate } = e.data;
+            encoder = new Mp3Encoder(1, sampleRate, 128);
+            return;
+        }
 
-    const float32 = new Float32Array(event.data.samples);
-    const int16 = new Int16Array(float32.length);
+        if (type === 'encode') {
+            if (!encoder) {
+                self.postMessage({ type: 'error', error: 'Encoder not initialized' } satisfies Mp3WorkerOutputMessage);
+                return;
+            }
 
-    for (let i = 0; i < float32.length; i++) {
-        const singleSample = Math.max(-1, Math.min(1, float32[i]));
-        int16[i] = singleSample < 0 ? singleSample * 0x8000 : singleSample * 0x7fff;
+            const int16 = float32ToInt16(e.data.rawAudio);
+            const mp3buf = encoder.encodeBuffer(int16);
+
+            if (mp3buf.length > 0) {
+                self.postMessage({ type: 'encoded', mp3Chunk: new Uint8Array(mp3buf) } satisfies Mp3WorkerOutputMessage);
+            }
+            return;
+        }
+
+        if (type === 'recording-finished') {
+            if (!encoder) {
+                self.postMessage({ type: 'error', error: 'Encoder not initialized' } satisfies Mp3WorkerOutputMessage);
+                return;
+            }
+
+            // encode last bits and clear memory from encoder
+            const remaining = encoder.flush();
+            if (remaining.length > 0) {
+                self.postMessage({ type: 'encoded', mp3Chunk: new Uint8Array(remaining) } satisfies Mp3WorkerOutputMessage);
+            }
+
+            encoder = null;
+            self.postMessage({ type: 'done' } satisfies Mp3WorkerOutputMessage);
+            return;
+        }
+    } catch (err) {
+        self.postMessage({
+            type: 'error',
+            error: err instanceof Error ? err.message : 'mp3 encoding failed',
+        });
     }
-
-    const mp3Encoder = new Mp3Encoder(1, event.data.sampleRate, 128);
-    const mp3Data: Int8Array[] = [];
-    const chunkSize = 1152; // Process in chunks of 1152 samples
-    const totalChunks = Math.ceil(int16.length / chunkSize);
-
-    for (let i = 0; i < int16.length; i += chunkSize) {
-        const chunk = int16.subarray(i, i + chunkSize);
-        const buf = mp3Encoder.encodeBuffer(chunk);
-        if (buf.length > 0) mp3Data.push(new Int8Array(buf));
-
-        self.postMessage({ type: 'progress', progress: (i / chunkSize + 1) / totalChunks });
-    }
-
-    const flush = mp3Encoder.flush(); // finish writing mp3
-    if (flush.length > 0) mp3Data.push(new Int8Array(flush));
-
-    const mp3Blob = new Blob(mp3Data.map(d => new Int8Array(d)), { type: 'audio/mp3' });
-
-    self.postMessage({ type: 'export-mp3-success', mp3Blob });
 };

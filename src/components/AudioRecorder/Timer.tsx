@@ -9,14 +9,6 @@ interface TimerProps {
 	totalTime: number;
 }
 export const Timer = ({ totalTime }: TimerProps) => {
-	if (totalTime === 0)
-		return (
-			<Badge variant="secondary">
-				<TimerIcon />
-				00:00
-			</Badge>
-		);
-
 	const totalSeconds = Math.floor(totalTime);
 	const hours = Math.floor(totalSeconds / 3600);
 	const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -27,5 +19,10 @@ export const Timer = ({ totalTime }: TimerProps) => {
 			? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 			: `${pad(minutes)}:${pad(seconds)}`;
 
-	return <Badge variant="secondary">{formattedTime}</Badge>;
+	return (
+		<Badge variant="secondary">
+			<TimerIcon />
+			{formattedTime}
+		</Badge>
+	);
 };
