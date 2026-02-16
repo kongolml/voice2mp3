@@ -74,5 +74,9 @@ export const useDrawWaveform = (
 
 	useEffect(() => {
 		play ? drawWaveform() : drawIdleCanvas();
-	}, [play]);
+
+		return () => {
+			cancelAnimationFrame(requestAnimationFrameRef.current);
+		};
+	}, [play, audioAnalyser]);
 };
