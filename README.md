@@ -2,6 +2,9 @@
 
 A browser-based audio recorder built with React and the Web Audio API. Supports long recordings (limitation set to 4 hours, but customizable), persisting reconrdings chunks in IndexedDB. Because chunks are written to IndexedDB as they arrive, recordings data are not lost between page refreshes, tab crashes and other unexpected errors.
 
+
+[Live Demo](https://kongolml.github.io/voice2mp3/)
+
 ## Features
 
 - **Record** — Start/stop recording with microphone access
