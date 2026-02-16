@@ -58,9 +58,9 @@ export const useAudioRecorder = () => {
 	 * into chunks (as discussed previously) of AUDIO_CHUNKS_LENGTH_MS seconds.
 	 * Then we glue chunks together to form a single audio file in the end.
 	 */
-	const startNewRecording = async () => {
+	const startNewRecording = async (): Promise<boolean> => {
 		try {
-			if (audioRecorderState !== RecorderStatesEnum.IDLE) return;
+			if (audioRecorderState !== RecorderStatesEnum.IDLE) return false;
 
 			audioRecorderStore.reset();
 			transcriptionStore.reset();
@@ -124,13 +124,14 @@ export const useAudioRecorder = () => {
 			};
 
 			audioRecorderStore.startRecording();
+			return true;
 		} catch (error) {
 			console.error(
 				"Error starting recording: ",
 				error,
 			);
 			cleanup();
-			return;
+			return false;
 		}
 	};
 

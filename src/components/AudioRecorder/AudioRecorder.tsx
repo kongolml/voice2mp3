@@ -58,7 +58,13 @@ export const AudioRecorder = () => {
 	} = useAudioRecorder();
 
 	const startRecording = async () => {
-		await startRecorder();
+		const started = await startRecorder();
+		if (!started) {
+			toast.error("Microphone access denied, unable to start recording", {
+				position: "top-center",
+			});
+			return;
+		}
 		startTimer();
 	};
 
