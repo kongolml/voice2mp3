@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 
 // store
 import { useAudioRecorderStore } from "@/store/useAudioRecorder.store";
+import { useTranscriptionStore } from "@/store/useTranscription.store";
 
 // meta
 import { RecorderStatesEnum } from "@/meta/recorder.meta";
@@ -17,6 +18,7 @@ import {
 	createSession,
 	finalizeSession,
 } from "@/utils/indexed-db";
+import { transcribeAudio } from "@/utils/transcription-api";
 
 const RAW_AUDIO_PROCESSOR_URL = new URL(
 	"../workers/raw-audio-processor.worklet.ts",
@@ -25,6 +27,7 @@ const RAW_AUDIO_PROCESSOR_URL = new URL(
 
 export const useAudioRecorder = () => {
 	const audioRecorderStore = useAudioRecorderStore();
+	const transcriptionStore = useTranscriptionStore();
 	const audioRecorderState = audioRecorderStore.recorderState;
 
 	const audioCtxRef = useRef<AudioContext | null>(null);
@@ -60,6 +63,7 @@ export const useAudioRecorder = () => {
 			if (audioRecorderState !== RecorderStatesEnum.IDLE) return;
 
 			audioRecorderStore.reset();
+			transcriptionStore.reset();
 
 			const audioStream = await navigator.mediaDevices.getUserMedia({
 				audio: true,
@@ -172,7 +176,18 @@ export const useAudioRecorder = () => {
 
 		cleanup();
 		audioRecorderStore.stopRecording();
-	}, [cleanup, audioRecorderStore]);
+
+		// trigger transcription in the background
+		transcriptionStore.setTranscriptionStatus("processing");
+		transcribeAudio(blob)
+			.then((text) => {
+				transcriptionStore.setTranscription(text);
+				transcriptionStore.setTranscriptionStatus("complete");
+			})
+			.catch(() => {
+				transcriptionStore.setTranscriptionStatus("error");
+			});
+	}, [cleanup, audioRecorderStore, transcriptionStore]);
 
 	const pauseRecording = useCallback(async () => {
 		if (audioRecorderState !== RecorderStatesEnum.RECORDING) return;

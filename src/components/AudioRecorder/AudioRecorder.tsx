@@ -3,6 +3,7 @@ import { Controls } from "@/components/AudioRecorder/Controls";
 import { Visualizer } from "@/components/AudioRecorder/Visualizer";
 import { Timer } from "@/components/AudioRecorder/Timer";
 import { RecordingExporter } from "@/components/AudioRecorder/RecordingExporter";
+import { Transcription } from "@/components/AudioRecorder/Transcription";
 import {
 	Card,
 	CardAction,
@@ -103,7 +104,7 @@ export const AudioRecorder = () => {
 				</CardFooter>
 			</Card>
 
-			{recorderState === RecorderStatesEnum.RECORDING && (
+			{(recorderState === RecorderStatesEnum.RECORDING || recorderState === RecorderStatesEnum.PAUSED) && (
 					<Button
 						size="xs"
 						variant="destructive"
@@ -113,6 +114,8 @@ export const AudioRecorder = () => {
 						Fake max recording duration reached
 					</Button>
 			)}
+
+			<Transcription />
 
 			<Toaster />
 		</div>
