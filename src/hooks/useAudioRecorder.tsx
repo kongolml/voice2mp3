@@ -21,7 +21,7 @@ import {
 import { transcribeAudio } from "@/utils/transcription-api";
 
 const RAW_AUDIO_PROCESSOR_URL = new URL(
-	"../workers/raw-audio-processor.worklet.ts",
+	"../workers/raw-audio-processor.worklet.js",
 	import.meta.url,
 );
 
@@ -126,7 +126,7 @@ export const useAudioRecorder = () => {
 			audioRecorderStore.startRecording();
 		} catch (error) {
 			console.error(
-				"Error starting recording, probably you have denied access to microphone",
+				"Error starting recording: ",
 				error,
 			);
 			cleanup();
