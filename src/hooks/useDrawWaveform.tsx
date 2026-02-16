@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 
 const colorsMap = {
-	waveColor: "#292524",
+	waveColor: "#3f3f46",
 	backgroundColor: "#f5f5f5"
 };
 

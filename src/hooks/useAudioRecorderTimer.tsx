@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 
-const MAX_RECORDINNG_DURATION_SECONDS = 1000 * 60 * 60 * 4; // 4 hours
 const TICK_INTERVAL_MS = 200;
 
 interface UseAudioRecorderTimerProps {
+	maxRecordingDurationSeconds: number;
 	onMaxRecordingDurationReached: () => void;
 }
 
 export const useAudioRecorderTimer = ({
+	maxRecordingDurationSeconds,
 	onMaxRecordingDurationReached,
 }: UseAudioRecorderTimerProps) => {
 	const [totalTime, setTotalTime] = useState(0);
@@ -38,7 +39,7 @@ export const useAudioRecorderTimer = ({
 			totalTimeSecondsRef.current = totalTimeMs / 1000;
 			setTotalTime(totalTimeSecondsRef.current);
 
-			if (totalTimeMs >= MAX_RECORDINNG_DURATION_SECONDS) {
+			if (totalTimeMs >= maxRecordingDurationSeconds) {
 				onMaxRecordingDurationReached();
 			}
 		}, TICK_INTERVAL_MS);

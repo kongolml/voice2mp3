@@ -11,19 +11,43 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner"; // required for toaster
 
 // hooks
 import { useAudioRecorderTimer } from "@/hooks/useAudioRecorderTimer";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 
+// store
+import { useAudioRecorderStore } from "@/store/useAudioRecorder.store";
+
+// meta
+import { RecorderStatesEnum } from "@/meta/recorder.meta";
+
+const MAX_RECORDINNG_DURATION_SECONDS_IN_HOURS = 4;
+const MAX_RECORDINNG_DURATION_SECONDS =
+	1000 * 60 * 60 * MAX_RECORDINNG_DURATION_SECONDS_IN_HOURS; // 4 hours
+
 // TODO: make this a custom component
 export const AudioRecorder = () => {
 	const onMaxRecordingDurationReached = () => {
+		toast.warning(
+			`Demo alert: quota (${MAX_RECORDINNG_DURATION_SECONDS_IN_HOURS} hours) reached`,
+			{
+				position: "top-center",
+			},
+		);
 		stopRecording();
 	};
 
 	const { totalTime, startTimer, pauseTimer, resumeTimer, stopTimer } =
-		useAudioRecorderTimer({ onMaxRecordingDurationReached });
+		useAudioRecorderTimer({
+			maxRecordingDurationSeconds: MAX_RECORDINNG_DURATION_SECONDS,
+			onMaxRecordingDurationReached,
+		});
+
+	const { recorderState } = useAudioRecorderStore();
 
 	const {
 		startNewRecording: startRecorder,
@@ -53,29 +77,44 @@ export const AudioRecorder = () => {
 	};
 
 	return (
-		<Card className="relative mx-auto w-full max-w-sm pt-0">
-			<Visualizer />
+		<div className="relative flex w-full max-w-sm flex-col items-center">
+			<Card className="relative w-full pt-0">
+				<Visualizer />
 
-			<CardHeader>
-				<CardAction>
-					<Timer totalTime={totalTime} />
-				</CardAction>
+				<CardHeader>
+					<CardAction>
+						<Timer totalTime={totalTime} />
+					</CardAction>
 
-				<CardTitle>Audio Recorder</CardTitle>
+					<CardTitle>Audio Recorder</CardTitle>
 
-				<CardDescription>
-					<RecordingExporter />
-				</CardDescription>
-			</CardHeader>
+					<CardDescription>
+						<RecordingExporter />
+					</CardDescription>
+				</CardHeader>
 
-			<CardFooter>
-				<Controls
-					onStartRecording={startRecording}
-					onStopRecording={stopRecording}
-					onPauseRecording={pauseRecording}
-					onResumeRecording={resumeRecording}
-				/>
-			</CardFooter>
-		</Card>
+				<CardFooter>
+					<Controls
+						onStartRecording={startRecording}
+						onStopRecording={stopRecording}
+						onPauseRecording={pauseRecording}
+						onResumeRecording={resumeRecording}
+					/>
+				</CardFooter>
+			</Card>
+
+			{recorderState === RecorderStatesEnum.RECORDING && (
+					<Button
+						size="xs"
+						variant="destructive"
+						className="absolute top-full mt-2"
+						onClick={onMaxRecordingDurationReached}
+					>
+						Fake max recording duration reached
+					</Button>
+			)}
+
+			<Toaster />
+		</div>
 	);
 };
